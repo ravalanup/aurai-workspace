@@ -1,0 +1,95 @@
+# Keycloak realm for the Aurai workspace, as code. Apply with:
+#   aurai-workspace plan  realm/aurai-realm.yaml --base-url http://localhost:8080
+#   aurai-workspace apply realm/aurai-realm.yaml --base-url http://localhost:8080
+# Secrets never appear in this file: the client secret and demo passwords come from environment variables.
+# All people below are fictional.
+
+realm: aurai
+display_name: Aurai
+access_token_lifespan_seconds: 900     # LiteLLM JWT mode needs tokens that live at least this long
+registration_allowed: false
+login_with_email_allowed: true
+
+roles:
+  - name: member
+    description: Can chat with approved models and ask questions of permitted knowledge
+  - name: builder
+    description: Member, plus can create prompts, assistants and tools for their group
+  - name: admin
+    description: Workspace administrator; manages models, groups and settings
+
+# Group membership grants roles. Groups are also the unit LiteLLM can treat as a team in JWT mode.
+groups:
+  - name: workspace-members
+    roles: [member]
+  - name: workspace-builders
+    roles: [member, builder]
+  - name: workspace-admins
+    roles: [member, admin]
+  # Knowledge groups grant access to document collections in aurai-knowledge-rag (config/entitlements.yaml there).
+  # They carry no roles: they add data access on top of workspace membership and are granted by the data owners.
+  - name: knowledge-ops
+    roles: []
+  - name: knowledge-hr
+    roles: []
+  - name: knowledge-finance
+    roles: []
+  # Approver groups decide on actions that agents propose (aurai-agent-runtime, config/approvers.yaml). They carry no
+  # roles and grant no data access. Membership is granted by the owner of the team's data, and nobody can approve a
+  # request made by their own agent run.
+  - name: approvers-ops
+    roles: []
+  - name: approvers-finance
+    roles: []
+
+clients:
+  - client_id: open-webui
+    name: Aurai Workspace
+    secret_env: OPEN_WEBUI_CLIENT_SECRET   # environment variable holding the client secret
+    redirect_uris:
+      - http://localhost:3100/oauth/oidc/callback
+    web_origins:
+      - http://localhost:3100
+    audience: litellm                      # added to access tokens so the gateway can verify them
+
+users:
+  - username: maya.ortega
+    email: maya.ortega@amazing-enterprise.example
+    first_name: Maya
+    last_name: Ortega
+    groups: [workspace-members]
+  - username: devon.park
+    email: devon.park@amazing-enterprise.example
+    first_name: Devon
+    last_name: Park
+    groups: [workspace-builders]
+  - username: sam.alvarez
+    email: sam.alvarez@amazing-enterprise.example
+    first_name: Sam
+    last_name: Alvarez
+    groups: [workspace-admins]
+  - username: omar.haddad
+    email: omar.haddad@amazing-enterprise.example
+    first_name: Omar
+    last_name: Haddad
+    groups: [workspace-builders, knowledge-ops]
+  - username: lee.chen
+    email: lee.chen@amazing-enterprise.example
+    first_name: Lee
+    last_name: Chen
+    groups: [workspace-members, knowledge-hr]
+  - username: priya.nair
+    email: priya.nair@amazing-enterprise.example
+    first_name: Priya
+    last_name: Nair
+    groups: [workspace-members, knowledge-finance]
+  - username: rosa.delgado
+    email: rosa.delgado@amazing-enterprise.example
+    first_name: Rosa
+    last_name: Delgado
+    groups: [workspace-members, approvers-ops]
+  - username: hana.kim
+    email: hana.kim@amazing-enterprise.example
+    first_name: Hana
+    last_name: Kim
+    groups: [workspace-members, approvers-finance]

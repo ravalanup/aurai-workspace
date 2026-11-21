@@ -1,0 +1,71 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Aurai workspace realm",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["realm", "roles", "groups", "clients"],
+  "properties": {
+    "realm": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+    "display_name": { "type": "string" },
+    "access_token_lifespan_seconds": { "type": "integer", "minimum": 60, "maximum": 3600 },
+    "registration_allowed": { "type": "boolean" },
+    "login_with_email_allowed": { "type": "boolean" },
+    "roles": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name"],
+        "properties": {
+          "name": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+          "description": { "type": "string" }
+        }
+      }
+    },
+    "groups": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "roles"],
+        "properties": {
+          "name": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+          "roles": { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    },
+    "clients": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["client_id", "secret_env", "redirect_uris"],
+        "properties": {
+          "client_id": { "type": "string" },
+          "name": { "type": "string" },
+          "secret_env": { "type": "string", "pattern": "^[A-Z][A-Z0-9_]*$" },
+          "redirect_uris": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+          "web_origins": { "type": "array", "items": { "type": "string" } },
+          "audience": { "type": "string" }
+        }
+      }
+    },
+    "users": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["username", "email", "groups"],
+        "properties": {
+          "username": { "type": "string" },
+          "email": { "type": "string", "format": "email" },
+          "first_name": { "type": "string" },
+          "last_name": { "type": "string" },
+          "groups": { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    }
+  }
+}
