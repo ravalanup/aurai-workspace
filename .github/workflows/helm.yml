@@ -1,0 +1,24 @@
+name: helm
+on:
+  push: { branches: [main], paths: ["charts/**", "deploy/**"] }
+  pull_request: { paths: ["charts/**", "deploy/**"] }
+permissions:
+  contents: read
+jobs:
+  chart:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: azure/setup-helm@v4
+      - run: helm lint charts/aurai-workspace -f charts/aurai-workspace/values-local.yaml
+      - run: helm template t charts/aurai-workspace -f charts/aurai-workspace/values-local.yaml > /tmp/local.yaml
+      - run: helm template t charts/aurai-workspace -f charts/aurai-workspace/values-aws.yaml --set networkPolicy.allowedIngressCIDRs={10.30.0.0/16} > /tmp/aws.yaml
+      - name: kubeconform
+        run: |
+          curl -sSL https://github.com/yannh/kubeconform/releases/download/v0.6.7/kubeconform-linux-amd64.tar.gz | tar xz
+          ./kubeconform -strict -summary /tmp/local.yaml /tmp/aws.yaml
+      - name: Render the Open WebUI chart with our values
+        run: |
+          helm repo add open-webui https://open-webui.github.io/helm-charts
+          helm repo update
+          helm template openwebui open-webui/open-webui -f deploy/open-webui-values.yaml -f deploy/open-webui-values-local.yaml > /dev/null
