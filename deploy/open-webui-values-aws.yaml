@@ -1,0 +1,32 @@
+# AWS (EKS). Replace the placeholders from Terraform outputs and your DNS name.
+replicaCount: 2
+
+persistence:
+  enabled: false      # uploads and state live in PostgreSQL and S3, not on a volume
+
+websocket:
+  enabled: true
+  manager: redis
+  redis:
+    enabled: false
+  existingSecret: openwebui-secrets
+  existingSecretKey: REDIS_URL
+
+ingress:
+  enabled: true
+  class: alb
+  host: workspace.aurai.example.invalid   # placeholder
+  annotations:
+    alb.ingress.kubernetes.io/scheme: internal
+    alb.ingress.kubernetes.io/target-type: ip
+
+extraEnvVars:
+  WEBUI_URL: https://workspace.aurai.example.invalid
+  OPENID_PROVIDER_URL: https://keycloak.aurai.example.invalid/realms/aurai/.well-known/openid-configuration
+  ENABLE_PERSISTENT_CONFIG: "false"
+  # Open WebUI ships with Redis-backed websockets when run with several replicas.
+  WEBSOCKET_MANAGER: redis
+  WEBSOCKET_REDIS_URL:
+    valueFrom: {secretKeyRef: {name: openwebui-secrets, key: REDIS_URL}}
+  # Production audit trail goes to the cluster log pipeline; keep message bodies out of it.
+  AUDIT_LOG_LEVEL: METADATA

@@ -1,0 +1,10 @@
+# OPTIONAL overlay for verified per-user identity (pairs with gateway/jwt.values.yaml, needs a LiteLLM
+# Enterprise license). Open WebUI sends the signed-in user's Keycloak access token to the gateway
+# instead of a shared key, so the gateway authorises each request as that person.
+openaiApiKeyExistingSecret: ""
+openaiApiKeyExistingSecretKey: ""
+
+extraEnvVars:
+  OPENAI_API_KEY: ""
+  OPENAI_API_CONFIGS: '{"0":{"enable":true,"auth_type":"system_oauth"}}'
+  # The token must outlive a chat turn; the realm sets 15 minutes.

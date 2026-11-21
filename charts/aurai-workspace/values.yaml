@@ -1,0 +1,19 @@
+global:
+  environment: local
+
+# Secret with key database-admin-url (created by scripts/deploy-local.ps1, or External Secrets in AWS).
+existingSecret: openwebui-secrets
+
+# Creates the openwebui database on the shared PostgreSQL if it does not exist.
+databaseBootstrap:
+  enabled: true
+  image: postgres:16.4
+  database: openwebui
+
+networkPolicy:
+  enabled: true
+  # Label that selects the Open WebUI pods created by the official chart.
+  podLabels:
+    app.kubernetes.io/name: open-webui
+  # CIDRs allowed to reach Open WebUI (for example the VPC CIDR when an ALB uses IP targets).
+  allowedIngressCIDRs: []

@@ -1,0 +1,6 @@
+apiVersion: v2
+name: aurai-workspace
+description: Support resources for the Aurai workspace (Open WebUI is installed from its official chart) - database bootstrap and network policy
+type: application
+version: 0.1.0
+appVersion: "0.1.0"

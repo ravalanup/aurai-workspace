@@ -1,0 +1,10 @@
+# Local kind cluster. Browse via port-forward on http://localhost:3100 (scripts/port-forward.ps1).
+persistence:
+  enabled: true
+  size: 2Gi
+
+extraEnvVars:
+  WEBUI_URL: http://localhost:3100
+  # Discovery runs inside the cluster; the browser reaches the same hostname through the hosts-file entry
+  # and port-forward described in docs/local-development.md.
+  OPENID_PROVIDER_URL: http://keycloak.aurai-system.svc.cluster.local:8080/realms/aurai/.well-known/openid-configuration

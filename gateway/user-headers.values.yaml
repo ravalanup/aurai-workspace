@@ -1,0 +1,20 @@
+# Helm values for the aurai-gateway chart that attribute each request to the person who made it.
+# Open WebUI (ENABLE_FORWARD_USER_INFO_HEADERS=true) sends X-OpenWebUI-User-Id and -Email on every call;
+# LiteLLM records them as the user for spend logs and per-user limits.
+#
+#   helm upgrade aurai-gateway ../aurai-gateway/charts/aurai-gateway -n aurai-gateway --reuse-values \
+#     -f gateway/user-headers.values.yaml
+#
+# Trust: these headers are accepted from whoever holds the workspace key, so the key must be held only
+# by the workspace and the gateway NetworkPolicy keeps other namespaces away from it. For verified
+# identity use gateway/jwt.values.yaml (needs a LiteLLM Enterprise license).
+litellm:
+  generalSettings:
+    user_header_mappings:
+      - header_name: X-OpenWebUI-User-Id
+        litellm_user_role: internal_user
+      - header_name: X-OpenWebUI-User-Email
+        litellm_user_role: customer
+  extraSettings:
+    extra_spend_tag_headers:
+      - X-OpenWebUI-User-Role

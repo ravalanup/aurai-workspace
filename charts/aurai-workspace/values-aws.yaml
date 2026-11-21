@@ -1,0 +1,5 @@
+global:
+  environment: aws
+# Set the ALB's VPC CIDR so the load balancer can reach the pods.
+networkPolicy:
+  allowedIngressCIDRs: []

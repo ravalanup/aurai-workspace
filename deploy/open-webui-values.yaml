@@ -1,0 +1,77 @@
+# Open WebUI via its official Helm chart (https://github.com/open-webui/helm-charts).
+# Values follow the layout in Open WebUI's Kubernetes deployment guide; confirm key names against the chart
+# version you install: helm show values open-webui/open-webui --version <v>
+#
+# Open WebUI is UI only here: models come from the Aurai gateway, identity from Keycloak, retrieval from the
+# knowledge service. Its own vector store and bundled services are off.
+fullnameOverride: openwebui
+
+ollama:
+  enabled: false
+pipelines:
+  enabled: false
+tika:
+  enabled: false
+websocket:
+  enabled: false
+
+service:
+  type: ClusterIP
+  port: 80
+
+# The workspace talks to the gateway with the "workspace" team key (kept in openwebui-secrets).
+openaiBaseApiUrl: http://litellm.aurai-gateway.svc.cluster.local:4000/v1
+openaiApiKeyExistingSecret: openwebui-secrets
+openaiApiKeyExistingSecretKey: OPENAI_API_KEY
+
+resources:
+  requests:
+    cpu: 250m
+    memory: 1Gi
+  limits:
+    memory: 2Gi
+
+# Environment, in the chart's map form. Settings marked (persisted) are saved to the database on first start;
+# later changes need the Admin Panel, or ENABLE_PERSISTENT_CONFIG=false to always read the environment.
+extraEnvVars:
+  WEBUI_SECRET_KEY:
+    valueFrom: {secretKeyRef: {name: openwebui-secrets, key: WEBUI_SECRET_KEY}}
+  DATABASE_URL:
+    valueFrom: {secretKeyRef: {name: openwebui-secrets, key: DATABASE_URL}}
+  UVICORN_WORKERS: "1"
+  ENABLE_PERSISTENT_CONFIG: "false"
+
+  # Identity: Keycloak only. No local signup and no password form; admins come from the Keycloak "admin" role.
+  ENABLE_SIGNUP: "false"
+  ENABLE_LOGIN_FORM: "false"
+  ENABLE_OAUTH_SIGNUP: "true"
+  OAUTH_MERGE_ACCOUNTS_BY_EMAIL: "true"
+  OAUTH_PROVIDER_NAME: Aurai SSO
+  OAUTH_CLIENT_ID: open-webui
+  OAUTH_CLIENT_SECRET:
+    valueFrom: {secretKeyRef: {name: openwebui-secrets, key: OAUTH_CLIENT_SECRET}}
+  OAUTH_SCOPES: openid email profile
+  # Keycloak roles (member, builder, admin) map to Open WebUI roles: all three may sign in, admin is admin.
+  ENABLE_OAUTH_ROLE_MANAGEMENT: "true"
+  OAUTH_ROLES_CLAIM: roles
+  OAUTH_ALLOWED_ROLES: member,builder,admin
+  OAUTH_ADMIN_ROLES: admin
+  # Keycloak groups become Open WebUI groups, where per-group permissions and model access are set.
+  ENABLE_OAUTH_GROUP_MANAGEMENT: "true"
+  ENABLE_OAUTH_GROUP_CREATION: "true"
+  OAUTH_GROUPS_CLAIM: groups
+  OAUTH_GROUP_CLAIM: groups
+
+  # Per-user attribution at the gateway (see gateway/user-headers.values.yaml).
+  ENABLE_FORWARD_USER_INFO_HEADERS: "true"
+
+  # Retrieval belongs to the knowledge service. Turn off Open WebUI's own web search and sharing features.
+  ENABLE_RAG_WEB_SEARCH: "false"
+  ENABLE_WEB_SEARCH: "false"
+  ENABLE_COMMUNITY_SHARING: "false"
+  ENABLE_OLLAMA_API: "false"
+
+  # Audit trail (WS-4): who did what, no message bodies. Metadata level keeps the user, route and time.
+  AUDIT_LOG_LEVEL: METADATA
+  ENABLE_AUDIT_STDOUT: "true"
+  ENABLE_AUDIT_LOGS_FILE: "false"

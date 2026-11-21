@@ -1,0 +1,21 @@
+# Gateway team for the workspace, in aurai-teamctl format (see aurai-gateway/teams/teams.yaml).
+# Apply with the gateway tooling:
+#   aurai-teamctl apply gateway/workspace-team.yaml --catalog ../aurai-gateway/config/model-catalog.yaml --base-url http://localhost:4000
+#   aurai-teamctl issue-key workspace --teams gateway/workspace-team.yaml --catalog ... --base-url ... --alias open-webui
+# The workspace is the general-purpose assistant for employees, so it is rated T1 (internal data, no
+# autonomous actions). The tier filter in this repo and the gateway PII guardrail both use that rating.
+# The team is fictional.
+
+defaults:
+  budget_duration: 30d
+
+teams:
+  - team_id: workspace
+    alias: Aurai Workspace
+    risk_tier: T1
+    owner: Platform product manager
+    cost_center: CC-1500
+    models: [aurai-fast, aurai-balanced, aurai-reasoning, aurai-gemini-fast, aurai-gemini-pro]
+    max_budget_usd: 800
+    rpm: 240
+    tpm: 300000
