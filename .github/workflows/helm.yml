@@ -8,7 +8,7 @@ jobs:
   chart:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: azure/setup-helm@v4
       - run: helm lint charts/aurai-workspace -f charts/aurai-workspace/values-local.yaml
       - run: helm template t charts/aurai-workspace -f charts/aurai-workspace/values-local.yaml > /tmp/local.yaml
