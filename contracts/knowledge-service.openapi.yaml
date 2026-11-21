@@ -1,0 +1,116 @@
+openapi: 3.1.0
+info:
+  title: Aurai Knowledge Service
+  version: 0.1.0
+  description: >
+    Contract between the Aurai workspace and the knowledge service implemented by aurai-knowledge-rag.
+    The workspace never retrieves documents itself. It sends the question and the caller's identity; the
+    service applies the caller's entitlements before anything is returned and attaches a citation to every
+    passage. This contract is the interface both repositories build against.
+servers:
+  - url: http://knowledge.aurai-knowledge.svc.cluster.local:8000
+paths:
+  /healthz:
+    get:
+      summary: Liveness and readiness
+      responses:
+        "200":
+          description: Service is ready
+  /v1/search:
+    post:
+      summary: Search permitted knowledge
+      description: >
+        Returns the most relevant passages the caller is entitled to read. A caller must never be able to
+        tell whether a passage they cannot read exists; unauthorized passages are omitted, not redacted.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: X-Aurai-Trace-Id
+          in: header
+          required: false
+          schema: { type: string }
+          description: Correlates this call with the workspace request in Langfuse and Phoenix.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SearchRequest"
+      responses:
+        "200":
+          description: Ranked passages with citations; an empty list is a valid answer
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SearchResponse"
+        "401":
+          description: Missing or invalid user token
+        "403":
+          description: The caller may not search the requested collections
+        "422":
+          description: Malformed request
+        "503":
+          description: Index unavailable; the workspace must tell the user, not guess
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: The signed-in user's Keycloak access token. Identity comes from the verified token, never from the body.
+  schemas:
+    SearchRequest:
+      type: object
+      additionalProperties: false
+      required: [query]
+      properties:
+        query:
+          type: string
+          minLength: 1
+          maxLength: 2000
+        collections:
+          type: array
+          items: { type: string }
+          description: Optional restriction; the service intersects it with the caller's entitlements.
+        top_k:
+          type: integer
+          minimum: 1
+          maximum: 20
+          default: 5
+    SearchResponse:
+      type: object
+      additionalProperties: false
+      required: [results]
+      properties:
+        results:
+          type: array
+          items:
+            $ref: "#/components/schemas/Passage"
+    Passage:
+      type: object
+      additionalProperties: false
+      required: [chunk_id, text, score, source]
+      properties:
+        chunk_id: { type: string }
+        text: { type: string }
+        score:
+          type: number
+          minimum: 0
+          maximum: 1
+        source:
+          $ref: "#/components/schemas/Source"
+    Source:
+      type: object
+      additionalProperties: false
+      required: [title, collection, classification]
+      properties:
+        title: { type: string }
+        uri: { type: string }
+        collection: { type: string }
+        classification:
+          type: string
+          enum: [public, internal, confidential, restricted]
+        freshness:
+          type: string
+          format: date
+          description: Date the source was last ingested.
