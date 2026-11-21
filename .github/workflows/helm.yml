@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: azure/setup-helm@v4
+      - uses: azure/setup-helm@v5
       - run: helm lint charts/aurai-workspace -f charts/aurai-workspace/values-local.yaml
       - run: helm template t charts/aurai-workspace -f charts/aurai-workspace/values-local.yaml > /tmp/local.yaml
       - run: helm template t charts/aurai-workspace -f charts/aurai-workspace/values-aws.yaml --set networkPolicy.allowedIngressCIDRs={10.30.0.0/16} > /tmp/aws.yaml
